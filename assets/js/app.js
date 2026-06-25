@@ -614,20 +614,37 @@ jQuery(document).ready(function($) {
 
 // --- WhatsApp Logic --- //
 function openWhatsAppAndLog(orderId, phone, message) {
-    // Determine number format (ensure 91 prefix)
     let cleanPhone = phone.replace(/[^0-9]/g, '');
     if (cleanPhone.length === 10) cleanPhone = '91' + cleanPhone;
 
-    let waUrl = `https://wa.me/${cleanPhone}?text=${encodeURIComponent(message)}`;
-    window.open(waUrl, '_blank');
+    // Show sending status on the button if called from a button click
+    let $btn = $(event.target);
+    let originalText = $btn.text();
+    if ($btn.length) {
+        $btn.text('Sending...').prop('disabled', true);
+    }
 
-    // Log to backend
+    // Send to backend which uses Twilio API
     $.post(lol_ajax_obj.ajax_url, {
         action: 'lol_log_whatsapp',
         nonce: lol_ajax_obj.nonce,
         order_id: orderId,
         phone_number: cleanPhone,
         message: message
+    }).done(function(response) {
+        if ($btn.length) {
+            $btn.text(originalText).prop('disabled', false);
+        }
+        if (response.success) {
+            alert('Message sent successfully!');
+        } else {
+            alert('Error sending message: ' + response.data.message);
+        }
+    }).fail(function() {
+        if ($btn.length) {
+            $btn.text(originalText).prop('disabled', false);
+        }
+        alert('Network error while sending message.');
     });
 }
 

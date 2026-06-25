@@ -47,6 +47,15 @@ function lol_admin_menu() {
 
     add_submenu_page(
         'lol-laundry-management',
+        'Settings',
+        '⚙️ Settings',
+        'manage_options',
+        'lol-settings',
+        'lol_admin_settings_page'
+    );
+
+    add_submenu_page(
+        'lol-laundry-management',
         "Today's Delivery",
         "🚚 Today's Delivery",
         'manage_options',
@@ -283,15 +292,32 @@ function lol_admin_page_styles() {
     <script>
     var lol_delivery_nonce_token = "<?php echo wp_create_nonce('lol_delivery_nonce'); ?>";
     document.addEventListener("DOMContentLoaded", function() {
-        // Helper to log WhatsApp sent
-        function logWaSend(orderId, phone, message) {
+        function logWaSend(orderId, phone, encodedMessage, btn) {
+            var message = decodeURIComponent(encodedMessage);
+            var originalText = btn ? btn.innerHTML : 'Sending';
+            if (btn) btn.innerHTML = 'Sending...';
+
             var formData = new FormData();
             formData.append('action', 'lol_log_whatsapp');
             formData.append('order_id', orderId);
             formData.append('phone_number', phone);
             formData.append('message', message);
             formData.append('nonce', lol_delivery_nonce_token);
-            fetch(ajaxurl, { method: 'POST', body: formData });
+            
+            fetch(ajaxurl, { method: 'POST', body: formData })
+                .then(r => r.json())
+                .then(res => {
+                    if (btn) btn.innerHTML = originalText;
+                    if (res.success) {
+                        alert('Message sent successfully!');
+                    } else {
+                        alert('Error: ' + res.data.message);
+                    }
+                })
+                .catch(e => {
+                    if (btn) btn.innerHTML = originalText;
+                    alert('Network error.');
+                });
         }
         window.logWaSend = logWaSend;
 
@@ -432,12 +458,9 @@ function lol_admin_page_styles() {
                                 setTimeout(() => currentPartialSelect.style.backgroundColor = currentPartialOriginalColor, 1500);
                             }
                             
-                            // Send WhatsApp
                             var waMsg = `Dear Customer,\n\nYour laundry order (Token ID: ${currentPartialToken}) is partially ready.\n\nItems being delivered today:\n\n${msgLines.join('\n')}\n\nRemaining items will be delivered shortly.\n\nThank you.\n\n⭐ Rate your experience & leave a review:\n${window.location.origin}/?lol_review=${encodeURIComponent(currentPartialToken)}`;
                             if (res.data && res.data.phone_number) {
-                                window.logWaSend(res.data.order_id, res.data.phone_number, waMsg);
-                                var waUrl = `https://wa.me/91${res.data.phone_number}?text=${encodeURIComponent(waMsg)}`;
-                                window.open(waUrl, '_blank');
+                                window.logWaSend(res.data.order_id, res.data.phone_number, encodeURIComponent(waMsg), null);
                             }
                             
                             setTimeout(() => location.reload(), 1000); // Reload to reflect changes
@@ -572,15 +595,15 @@ function lol_admin_orders_page() {
                         // Notify delivery date
                         if ( $order->delivery_date && $order->order_status !== 'Delivered' ) {
                             $msg = "Hello " . $order->customer_name . ", your laundry will be delivered on " . date_i18n('d M Y', strtotime($order->delivery_date)) . ". Token: " . $order->token_id . ". Thank you! — Laugh-O-Laundry\n\n⭐ Rate your experience & leave a review:\n" . lol_review_url( $order->token_id );
-                            $wa_url = lol_whatsapp_link($order->phone_number, $msg);
-                            $wa_actions .= '<a href="' . esc_url($wa_url) . '" target="_blank" class="lol-wa-btn lol-wa-btn-small" title="Notify delivery date" onclick="logWaSend('.$order->id.', \''.$order->phone_number.'\', \'Notify Delivery\')">📱 Notify</a><br>';
+                            $encoded_msg = rawurlencode($msg);
+                            $wa_actions .= '<a href="javascript:void(0)" class="lol-wa-btn lol-wa-btn-small" title="Notify delivery date" onclick="logWaSend('.$order->id.', \''.$order->phone_number.'\', \''.$encoded_msg.'\', this); return false;">📱 Notify</a><br>';
                         }
 
                         // Send Ready Notification
                         if ( !in_array($order->order_status, ['Ready for Delivery', 'Delivered', 'Completed']) ) {
                             $ready_msg = "Hello " . $order->customer_name . ",\n\nYour clothes are ready.\nThey will be delivered within 1 day.\n\nThank you for choosing our laundry service.\n\n⭐ Please share your feedback & review:\n" . lol_review_url( $order->token_id );
-                            $ready_url = lol_whatsapp_link($order->phone_number, $ready_msg);
-                            $wa_actions .= '<a href="' . esc_url($ready_url) . '" target="_blank" class="lol-wa-btn lol-wa-btn-small" style="background:#0ea5e9;" title="Clothes Ready" onclick="logWaSend('.$order->id.', \''.$order->phone_number.'\', \'Ready for Dispatch\')">💬 Ready</a>';
+                            $encoded_ready = rawurlencode($ready_msg);
+                            $wa_actions .= '<a href="javascript:void(0)" class="lol-wa-btn lol-wa-btn-small" style="background:#0ea5e9;" title="Clothes Ready" onclick="logWaSend('.$order->id.', \''.$order->phone_number.'\', \''.$encoded_ready.'\', this); return false;">💬 Ready</a>';
                         }
                         
                         // Status Dropdown
@@ -726,7 +749,7 @@ function lol_admin_todays_delivery_page() {
                     }
 
                     $wa_msg = "Hello " . $order->customer_name . ", your laundry delivery is scheduled for today (" . date_i18n('d M Y', strtotime($today)) . ")." . $payment_line . "\nToken: " . $order->token_id . "\nThank you! — Laugh-O-Laundry\n\n⭐ Rate your experience & leave a review:\n" . lol_review_url( $order->token_id );
-                    $wa_url = lol_whatsapp_link($order->phone_number, $wa_msg);
+                    $encoded_msg = rawurlencode($wa_msg);
                 ?>
                 <tr>
                     <td><strong><?php echo esc_html($order->token_id); ?></strong></td>
@@ -740,7 +763,7 @@ function lol_admin_todays_delivery_page() {
                     <td class="lol-items-detail"><?php echo $items_html; ?></td>
                     <td><?php echo esc_html($order->delivery_boy ? $order->delivery_boy : 'Not Assigned'); ?></td>
                     <td>
-                        <a href="<?php echo esc_url($wa_url); ?>" target="_blank" class="lol-wa-btn">
+                        <a href="javascript:void(0)" class="lol-wa-btn" onclick="logWaSend(<?php echo $order->id; ?>, '<?php echo esc_js($order->phone_number); ?>', '<?php echo $encoded_msg; ?>', this); return false;">
                             📱 Send Message
                         </a>
                     </td>
@@ -1238,6 +1261,56 @@ function lol_admin_all_pickups_page() {
                 <?php endif; ?>
             </tbody>
         </table>
+    </div>
+    <?php
+}
+
+function lol_admin_settings_page() {
+    // Handle form submission
+    if ( isset($_POST['lol_settings_nonce']) && wp_verify_nonce($_POST['lol_settings_nonce'], 'lol_save_settings') ) {
+        update_option('twilio_account_sid', sanitize_text_field($_POST['twilio_account_sid']));
+        update_option('twilio_auth_token', sanitize_text_field($_POST['twilio_auth_token']));
+        update_option('twilio_whatsapp_number', sanitize_text_field($_POST['twilio_whatsapp_number']));
+        echo '<div class="notice notice-success is-dismissible"><p>Settings saved successfully.</p></div>';
+    }
+
+    $sid = get_option('twilio_account_sid', '');
+    $token = get_option('twilio_auth_token', '');
+    $number = get_option('twilio_whatsapp_number', '');
+
+    lol_admin_page_styles();
+    ?>
+    <div class="wrap">
+        <h1>⚙️ Twilio Settings</h1>
+        <p>Enter your Twilio API credentials to enable centralized WhatsApp messaging.</p>
+        
+        <form method="post" action="">
+            <?php wp_nonce_field('lol_save_settings', 'lol_settings_nonce'); ?>
+            <table class="form-table">
+                <tr>
+                    <th scope="row"><label for="twilio_account_sid">Twilio Account SID</label></th>
+                    <td>
+                        <input name="twilio_account_sid" type="text" id="twilio_account_sid" value="<?php echo esc_attr($sid); ?>" class="regular-text">
+                    </td>
+                </tr>
+                <tr>
+                    <th scope="row"><label for="twilio_auth_token">Twilio Auth Token</label></th>
+                    <td>
+                        <input name="twilio_auth_token" type="password" id="twilio_auth_token" value="<?php echo esc_attr($token); ?>" class="regular-text">
+                    </td>
+                </tr>
+                <tr>
+                    <th scope="row"><label for="twilio_whatsapp_number">Twilio WhatsApp Number</label></th>
+                    <td>
+                        <input name="twilio_whatsapp_number" type="text" id="twilio_whatsapp_number" value="<?php echo esc_attr($number); ?>" class="regular-text" placeholder="e.g. whatsapp:+14155238886">
+                        <p class="description">Must include the "whatsapp:" prefix and country code.</p>
+                    </td>
+                </tr>
+            </table>
+            <p class="submit">
+                <input type="submit" name="submit" id="submit" class="button button-primary" value="Save Changes">
+            </p>
+        </form>
     </div>
     <?php
 }

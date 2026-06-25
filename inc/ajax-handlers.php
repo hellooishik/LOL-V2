@@ -422,18 +422,61 @@ function lol_ajax_log_whatsapp() {
         wp_send_json_error( array( 'message' => 'Missing details' ) );
     }
 
+    $sid = get_option('twilio_account_sid', '');
+    $token = get_option('twilio_auth_token', '');
+    $twilio_number = get_option('twilio_whatsapp_number', '');
+
+    $api_status = 'Sent via wa.me'; // Default fallback
+
+    if ( ! empty($sid) && ! empty($token) && ! empty($twilio_number) ) {
+        // Format destination number
+        $cleanPhone = preg_replace('/[^0-9]/', '', $phone_number);
+        if ( strlen($cleanPhone) === 10 ) {
+            $cleanPhone = '91' . $cleanPhone;
+        }
+        $to_number = 'whatsapp:+' . $cleanPhone;
+
+        $url = "https://api.twilio.com/2010-04-01/Accounts/$sid/Messages.json";
+        
+        $args = array(
+            'headers' => array(
+                'Authorization' => 'Basic ' . base64_encode( $sid . ':' . $token )
+            ),
+            'body' => array(
+                'From' => $twilio_number,
+                'To'   => $to_number,
+                'Body' => $message
+            )
+        );
+
+        $response = wp_remote_post( $url, $args );
+
+        if ( is_wp_error( $response ) ) {
+            $api_status = 'Twilio Error: ' . $response->get_error_message();
+            wp_send_json_error( array( 'message' => $api_status ) );
+        } else {
+            $body = json_decode( wp_remote_retrieve_body( $response ), true );
+            if ( isset($body['sid']) ) {
+                $api_status = 'Sent via Twilio API';
+            } else {
+                $api_status = 'Twilio Error: ' . (isset($body['message']) ? $body['message'] : 'Unknown');
+                wp_send_json_error( array( 'message' => $api_status ) );
+            }
+        }
+    }
+
     $wpdb->insert(
         $logs_table,
         array(
             'order_id' => $order_id,
             'phone_number' => $phone_number,
             'message' => $message,
-            'status' => 'Sent via wa.me'
+            'status' => $api_status
         ),
         array('%d', '%s', '%s', '%s')
     );
 
-    wp_send_json_success();
+    wp_send_json_success( array( 'status' => $api_status ) );
 }
 
 // Update Order Status manually
