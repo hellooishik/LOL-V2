@@ -96,7 +96,7 @@
                         <th style="padding: 10px;">Token ID</th>
                         <th style="padding: 10px;">Customer</th>
                         <th style="padding: 10px;">Phone</th>
-                        <th style="padding: 10px;">Items</th>
+                        <th style="padding: 10px;">Total Clothes</th>
                         <th style="padding: 10px;">Status</th>
                     </tr>
                 </thead>

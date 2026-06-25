@@ -76,6 +76,7 @@
             <p><strong>Customer:</strong> <span id="success-name"></span></p>
             <p><strong>Phone:</strong> <span id="success-phone"></span></p>
             <p><strong>Date:</strong> <span id="success-date"></span></p>
+            <p><strong>Total Clothes:</strong> <span id="success-total-clothes"></span></p>
         </div>
 
         <div class="lol-success-actions">

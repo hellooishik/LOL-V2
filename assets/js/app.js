@@ -121,6 +121,14 @@ jQuery(document).ready(function($) {
                 $('#success-name').text(data.customer_name);
                 $('#success-phone').text(data.phone_number);
                 $('#success-date').text(data.pickup_date);
+
+                let totalClothes = 0;
+                if(data.items && Array.isArray(data.items)) {
+                     data.items.forEach(item => totalClothes += parseInt(item.quantity) || 0);
+                } else if(data.items) {
+                     Object.values(data.items).forEach(item => totalClothes += parseInt(item.quantity) || 0);
+                }
+                $('#success-total-clothes').text(totalClothes);
                 
                 // Set WhatsApp Send button logic
                 let waMessage = `Hello ${data.customer_name},\n\nWe have successfully picked up your clothes.\nYour order is now being processed and is expected to be delivered within 3–4 days.\n\nThank you for choosing our laundry service.\n\nToken: ${data.token_id}`;
