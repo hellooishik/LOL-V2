@@ -38,6 +38,15 @@ function lol_admin_menu() {
 
     add_submenu_page(
         'lol-laundry-management',
+        'All Pickups',
+        '📋 All Pickups',
+        'manage_options',
+        'lol-all-pickups',
+        'lol_admin_all_pickups_page'
+    );
+
+    add_submenu_page(
+        'lol-laundry-management',
         "Today's Delivery",
         "🚚 Today's Delivery",
         'manage_options',
@@ -1153,6 +1162,82 @@ function lol_admin_payment_collection_page() {
             });
         });
         </script>
+    </div>
+    <?php
+}
+
+function lol_admin_all_pickups_page() {
+    global $wpdb;
+    $orders_table = $wpdb->prefix . 'laundry_orders';
+    $items_table = $wpdb->prefix . 'laundry_order_items';
+
+    // Fetch all orders
+    $orders = $wpdb->get_results("SELECT * FROM $orders_table ORDER BY id DESC");
+
+    // Fetch items to calculate total clothes and check for urgent items
+    $order_ids = array_map(function($o) { return intval($o->id); }, $orders);
+    $all_items = array();
+    if ( ! empty($order_ids) ) {
+        $ids_str = implode(',', $order_ids);
+        $items_rows = $wpdb->get_results("SELECT * FROM $items_table WHERE order_id IN ($ids_str)");
+        foreach ($items_rows as $item) {
+            $all_items[$item->order_id][] = $item;
+        }
+    }
+
+    lol_admin_page_styles();
+    ?>
+    <div class="wrap">
+        <h1>📋 All Pickups</h1>
+        <p>Overview of all pickups including total clothes and urgent item requests.</p>
+        
+        <table class="wp-list-table widefat fixed striped">
+            <thead>
+                <tr>
+                    <th style="width: 140px;">Token ID</th>
+                    <th>Customer Name</th>
+                    <th>Phone</th>
+                    <th>Pickup Date</th>
+                    <th>Status</th>
+                    <th>Total Clothes</th>
+                    <th>Urgent Needs</th>
+                </tr>
+            </thead>
+            <tbody>
+                <?php if ($orders) : foreach($orders as $order) :
+                    $total_clothes = 0;
+                    $urgent_info = array();
+                    
+                    if ( isset($all_items[$order->id]) ) {
+                        foreach ( $all_items[$order->id] as $item ) {
+                            $total_clothes += intval($item->quantity);
+                            if ( $item->is_urgent == 1 ) {
+                                $urgent_date = $item->urgent_delivery_date ? esc_html($item->urgent_delivery_date) : 'No Date';
+                                $urgent_info[] = "<span style='color: #dc2626; font-weight: 600;'>Yes (" . esc_html($item->service_type) . " - " . $urgent_date . ")</span>";
+                            }
+                        }
+                    }
+                    
+                    if ( empty($urgent_info) ) {
+                        $urgent_html = "No";
+                    } else {
+                        $urgent_html = implode("<br>", $urgent_info);
+                    }
+                ?>
+                <tr>
+                    <td><strong><?php echo esc_html($order->token_id); ?></strong></td>
+                    <td><?php echo esc_html($order->customer_name); ?></td>
+                    <td><?php echo esc_html($order->phone_number); ?></td>
+                    <td><?php echo esc_html($order->pickup_date); ?></td>
+                    <td><?php echo lol_status_badge($order->order_status); ?></td>
+                    <td style="font-weight: bold;"><?php echo $total_clothes; ?></td>
+                    <td><?php echo $urgent_html; ?></td>
+                </tr>
+                <?php endforeach; else : ?>
+                <tr><td colspan="7">No pickups found.</td></tr>
+                <?php endif; ?>
+            </tbody>
+        </table>
     </div>
     <?php
 }
