@@ -1,0 +1,7 @@
+{
+    "name": "lol/delivery-sys",
+    "description": "Laugh-O-Laundry Delivery Management System",
+    "require": {
+        "phpoffice/phpspreadsheet": "^1.29"
+    }
+}
