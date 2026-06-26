@@ -131,7 +131,7 @@ jQuery(document).ready(function($) {
                 $('#success-total-clothes').text(totalClothes);
                 
                 // Set WhatsApp Send button logic
-                let waMessage = `Hello ${data.customer_name},\n\nWe have successfully picked up your clothes.\nYour order is now being processed and is expected to be delivered within 3–4 days.\n\nThank you for choosing our laundry service.\n\nToken: ${data.token_id}`;
+                let waMessage = `Hello ${data.customer_name},\nWe have successfully picked up your clothes.\nYour order is now being processed and is expected to be delivered within 3–4 days.\nThank you for choosing our laundry service.\nToken: ${data.token_id}\nHave a great day!`;
                 $('#btn-wa-pickup').off('click').on('click', function() {
                     openWhatsAppAndLog(data.order_id || 0, data.phone_number, waMessage);
                 });
