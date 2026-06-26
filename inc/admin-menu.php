@@ -601,7 +601,7 @@ function lol_admin_orders_page() {
 
                         // Send Ready Notification
                         if ( !in_array($order->order_status, ['Ready for Delivery', 'Delivered', 'Completed']) ) {
-                            $ready_msg = "Hello " . $order->customer_name . ",\n\nYour clothes are ready.\nThey will be delivered within 1 day.\n\nThank you for choosing our laundry service.\n\n⭐ Please share your feedback & review:\n" . lol_review_url( $order->token_id );
+                            $ready_msg = "Hello " . $order->customer_name . ",\nYour clothes are ready.\nThey will be delivered within 1 day.\nThank you for choosing our laundry service.\n⭐ Please share your feedback & review:\n" . lol_review_url( $order->token_id );
                             $encoded_ready = rawurlencode($ready_msg);
                             $wa_actions .= '<a href="javascript:void(0)" class="lol-wa-btn lol-wa-btn-small" style="background:#0ea5e9;" title="Clothes Ready" onclick="logWaSend('.$order->id.', \''.$order->phone_number.'\', \''.$encoded_ready.'\', this); return false;">💬 Ready</a>';
                         }
