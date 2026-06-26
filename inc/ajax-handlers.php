@@ -435,13 +435,11 @@ function lol_ajax_log_whatsapp() {
             $cleanPhone = '91' . $cleanPhone;
         }
         
-        $is_whatsapp = (strpos($twilio_number, 'whatsapp:') === 0);
-        
-        if ( $is_whatsapp ) {
-            $to_number = 'whatsapp:+' . $cleanPhone;
-        } else {
-            $to_number = '+' . $cleanPhone;
+        // Force WhatsApp prefix
+        if ( strpos($twilio_number, 'whatsapp:') !== 0 ) {
+            $twilio_number = 'whatsapp:' . $twilio_number;
         }
+        $to_number = 'whatsapp:+' . $cleanPhone;
 
         $url = "https://api.twilio.com/2010-04-01/Accounts/$sid/Messages.json";
         
