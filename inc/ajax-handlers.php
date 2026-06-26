@@ -424,7 +424,7 @@ function lol_ajax_log_whatsapp() {
 
     $sid = get_option('twilio_account_sid', '');
     $token = get_option('twilio_auth_token', '');
-    $twilio_number = get_option('twilio_whatsapp_number', '');
+    $twilio_number = trim(get_option('twilio_whatsapp_number', ''));
 
     $api_status = 'Sent via wa.me'; // Default fallback
 
@@ -434,7 +434,14 @@ function lol_ajax_log_whatsapp() {
         if ( strlen($cleanPhone) === 10 ) {
             $cleanPhone = '91' . $cleanPhone;
         }
-        $to_number = 'whatsapp:+' . $cleanPhone;
+        
+        $is_whatsapp = (strpos($twilio_number, 'whatsapp:') === 0);
+        
+        if ( $is_whatsapp ) {
+            $to_number = 'whatsapp:+' . $cleanPhone;
+        } else {
+            $to_number = '+' . $cleanPhone;
+        }
 
         $url = "https://api.twilio.com/2010-04-01/Accounts/$sid/Messages.json";
         

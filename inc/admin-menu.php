@@ -1300,10 +1300,10 @@ function lol_admin_settings_page() {
                     </td>
                 </tr>
                 <tr>
-                    <th scope="row"><label for="twilio_whatsapp_number">Twilio WhatsApp Number</label></th>
+                    <th scope="row"><label for="twilio_whatsapp_number">Twilio Number (SMS or WhatsApp)</label></th>
                     <td>
-                        <input name="twilio_whatsapp_number" type="text" id="twilio_whatsapp_number" value="<?php echo esc_attr($number); ?>" class="regular-text" placeholder="e.g. whatsapp:+14155238886">
-                        <p class="description">Must include the "whatsapp:" prefix and country code.</p>
+                        <input name="twilio_whatsapp_number" type="text" id="twilio_whatsapp_number" value="<?php echo esc_attr($number); ?>" class="regular-text" placeholder="e.g. +18129955938 or whatsapp:+14155238886">
+                        <p class="description">Enter your Twilio phone number for SMS (e.g. <code>+18129955938</code>). For WhatsApp, include the prefix (e.g. <code>whatsapp:+14155238886</code>).</p>
                     </td>
                 </tr>
             </table>
