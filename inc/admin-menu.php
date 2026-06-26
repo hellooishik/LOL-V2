@@ -458,7 +458,7 @@ function lol_admin_page_styles() {
                                 setTimeout(() => currentPartialSelect.style.backgroundColor = currentPartialOriginalColor, 1500);
                             }
                             
-                            var waMsg = `Dear Customer,\n\nYour laundry order (Token ID: ${currentPartialToken}) is partially ready.\n\nItems being delivered today:\n\n${msgLines.join('\n')}\n\nRemaining items will be delivered shortly.\n\nThank you.\n\n⭐ Rate your experience & leave a review:\n${window.location.origin}/?lol_review=${encodeURIComponent(currentPartialToken)}`;
+                            var waMsg = `Dear Customer,\nYour laundry order (Token ID: ${currentPartialToken}) is partially ready.\nItems being delivered today:\n${msgLines.join(', ')}\nRemaining items will be delivered shortly.\nThank you.\n⭐ Rate your experience & leave a review:\n${window.location.origin}/?lol_review=${encodeURIComponent(currentPartialToken)}\nHave a great day!`;
                             if (res.data && res.data.phone_number) {
                                 window.logWaSend(res.data.order_id, res.data.phone_number, encodeURIComponent(waMsg), null);
                             }
@@ -594,7 +594,7 @@ function lol_admin_orders_page() {
                         $wa_actions = '';
                         // Notify delivery date
                         if ( $order->delivery_date && $order->order_status !== 'Delivered' ) {
-                            $msg = "Hello " . $order->customer_name . ", your laundry will be delivered on " . date_i18n('d M Y', strtotime($order->delivery_date)) . ". Token: " . $order->token_id . ". Thank you! — Laugh-O-Laundry\n\n⭐ Rate your experience & leave a review:\n" . lol_review_url( $order->token_id );
+                            $msg = "Hello " . $order->customer_name . ",\nYour laundry will be delivered on " . date_i18n('d M Y', strtotime($order->delivery_date)) . ".\nToken: " . $order->token_id . ".\nThank you! — Laugh-O-Laundry\n⭐ Rate your experience & leave a review:\n" . lol_review_url( $order->token_id ) . "\nHave a great day!";
                             $encoded_msg = rawurlencode($msg);
                             $wa_actions .= '<a href="javascript:void(0)" class="lol-wa-btn lol-wa-btn-small" title="Notify delivery date" onclick="logWaSend('.$order->id.', \''.$order->phone_number.'\', \''.$encoded_msg.'\', this); return false;">📱 Notify</a><br>';
                         }
@@ -738,17 +738,12 @@ function lol_admin_todays_delivery_page() {
                     }
 
                     // WhatsApp message
-                    $payment_line = '';
+                    $payment_line = "Payment Status: " . $order->payment_status;
                     if ( $order->total_bill_amount > 0 ) {
-                        $payment_line = "\nTotal Bill: ₹" . number_format($order->total_bill_amount, 0);
-                        $payment_line .= "\nAmount Received: ₹" . number_format($order->amount_received, 0);
-                        if ( $order->balance_due > 0 ) {
-                            $payment_line .= "\nBalance Due: ₹" . number_format($order->balance_due, 0);
-                        }
-                        $payment_line .= "\nPayment Status: " . $order->payment_status;
+                        $payment_line .= " (Due: ₹" . number_format($order->balance_due, 0) . ")";
                     }
 
-                    $wa_msg = "Hello " . $order->customer_name . ", your laundry delivery is scheduled for today (" . date_i18n('d M Y', strtotime($today)) . ")." . $payment_line . "\nToken: " . $order->token_id . "\nThank you! — Laugh-O-Laundry\n\n⭐ Rate your experience & leave a review:\n" . lol_review_url( $order->token_id );
+                    $wa_msg = "Hello " . $order->customer_name . ",\nYour laundry delivery is scheduled for today (" . date_i18n('d M Y', strtotime($today)) . ").\n" . $payment_line . "\nToken: " . $order->token_id . "\nThank you! — Laugh-O-Laundry\n⭐ Rate your experience & leave a review:\n" . lol_review_url( $order->token_id ) . "\nHave a great day!";
                     $encoded_msg = rawurlencode($wa_msg);
                 ?>
                 <tr>
