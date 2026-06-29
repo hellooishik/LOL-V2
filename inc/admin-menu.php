@@ -335,6 +335,11 @@ function lol_admin_page_styles() {
                     return;
                 }
                 
+                if (newStatus === 'Processing') {
+                    openProcessingModal(token, sel, originalColor);
+                    return;
+                }
+                
                 this.style.backgroundColor = '#fef08a'; // yellow loading
 
                 var formData = new FormData();
@@ -355,6 +360,71 @@ function lol_admin_page_styles() {
                     });
             });
         });
+
+        // Processing Modal Logic
+        var currentProcessingToken = null;
+        var currentProcessingSelect = null;
+        var currentProcessingOriginalColor = null;
+
+        function openProcessingModal(token, selectElement, originalColor) {
+            currentProcessingToken = token;
+            currentProcessingSelect = selectElement;
+            currentProcessingOriginalColor = originalColor;
+            document.getElementById('processing-token-id').textContent = token;
+            document.getElementById('processing-amount').value = '';
+            document.getElementById('processing-date').value = '';
+            document.getElementById('lol-processing-modal').style.display = 'flex';
+        }
+
+        if (document.getElementById('btn-close-processing')) {
+            document.getElementById('btn-close-processing').addEventListener('click', function() {
+                document.getElementById('lol-processing-modal').style.display = 'none';
+                if (currentProcessingSelect) {
+                    currentProcessingSelect.value = 'Picked Up'; // Revert back temporarily
+                }
+            });
+        }
+
+        if (document.getElementById('btn-save-processing')) {
+            document.getElementById('btn-save-processing').addEventListener('click', function() {
+                var amt = document.getElementById('processing-amount').value;
+                var date = document.getElementById('processing-date').value;
+                if (!amt || !date) {
+                    alert('Please enter total amount and delivery date.');
+                    return;
+                }
+                
+                var formData = new FormData();
+                formData.append('action', 'lol_process_order');
+                formData.append('token_id', currentProcessingToken);
+                formData.append('amount', amt);
+                formData.append('delivery_date', date);
+
+                var btn = this;
+                var oldText = btn.textContent;
+                btn.textContent = 'Saving...';
+                btn.disabled = true;
+
+                fetch(ajaxurl, { method: 'POST', body: formData })
+                    .then(r => r.json())
+                    .then(res => {
+                        btn.textContent = oldText;
+                        btn.disabled = false;
+                        if(res.success) {
+                            document.getElementById('lol-processing-modal').style.display = 'none';
+                            alert('Order processed and customer notified successfully.');
+                            location.reload();
+                        } else {
+                            alert('Error: ' + res.data.message);
+                        }
+                    })
+                    .catch(e => {
+                        btn.textContent = oldText;
+                        btn.disabled = false;
+                        alert('Server error.');
+                    });
+            });
+        }
 
         // Partial Delivery Modal Logic
         var currentPartialToken = null;
@@ -590,24 +660,47 @@ function lol_admin_orders_page() {
                             }
                         }
 
-                        // WhatsApp actions
-                        $wa_actions = '';
-                        // Notify delivery date
-                        if ( $order->delivery_date && $order->order_status !== 'Delivered' ) {
-                            $msg = "Hello " . $order->customer_name . ",\nYour laundry will be delivered on " . date_i18n('d M Y', strtotime($order->delivery_date)) . ".\nToken: " . $order->token_id . ".\nThank you! — Laugh-O-Laundry\n⭐ Rate your experience & leave a review:\n" . lol_review_url( $order->token_id ) . "\nHave a great day!";
-                            $encoded_msg = rawurlencode($msg);
-                            $wa_actions .= '<a href="javascript:void(0)" class="lol-wa-btn lol-wa-btn-small" title="Notify delivery date" onclick="logWaSend('.$order->id.', \''.$order->phone_number.'\', \''.$encoded_msg.'\', this); return false;">📱 Notify</a><br>';
-                        }
+                        // WhatsApp alerts
+                        $wa_actions = '<div style="display:flex; flex-direction:column; gap:4px;">';
 
-                        // Send Ready Notification
-                        if ( !in_array($order->order_status, ['Ready for Delivery', 'Delivered', 'Completed']) ) {
-                            $ready_msg = "Hello " . $order->customer_name . ",\nYour clothes are ready.\nThey will be delivered within 1 day.\nThank you for choosing our laundry service.\n⭐ Please share your feedback & review:\n" . lol_review_url( $order->token_id ) . "\nHave a great day!";
-                            $encoded_ready = rawurlencode($ready_msg);
-                            $wa_actions .= '<a href="javascript:void(0)" class="lol-wa-btn lol-wa-btn-small" style="background:#0ea5e9;" title="Clothes Ready" onclick="logWaSend('.$order->id.', \''.$order->phone_number.'\', \''.$encoded_ready.'\', this); return false;">💬 Ready</a>';
+                        // 1. Picked Up
+                        $msg1 = "Hello " . $order->customer_name . ",\nYour item is picked up.\nToken: " . $order->token_id . ".\nThank you! — Laugh-O-Laundry";
+                        $enc1 = rawurlencode($msg1);
+                        $wa_actions .= '<a href="javascript:void(0)" class="lol-wa-btn lol-wa-btn-small" style="background:#64748b;" title="Picked Up Alert" onclick="logWaSend('.$order->id.', \''.$order->phone_number.'\', \''.$enc1.'\', this); return false;">📦 Picked Up</a>';
+
+                        // 2. Processing
+                        $msg2 = "Hello " . $order->customer_name . ",\nYour item is in processing.\nToken: " . $order->token_id . ".\nThank you! — Laugh-O-Laundry";
+                        $enc2 = rawurlencode($msg2);
+                        $wa_actions .= '<a href="javascript:void(0)" class="lol-wa-btn lol-wa-btn-small" style="background:#eab308;" title="Processing Alert" onclick="logWaSend('.$order->id.', \''.$order->phone_number.'\', \''.$enc2.'\', this); return false;">⚙️ Processing</a>';
+
+                        // 3. Out for delivery (Partial/Full logic)
+                        $delivery_items_text = "";
+                        if ($order->order_status === 'Partial Delivery' && isset($all_items[$order->id])) {
+                            $partial_list = [];
+                            foreach ($all_items[$order->id] as $item) {
+                                if (intval($item->delivered_quantity) > 0 && intval($item->quantity) > intval($item->delivered_quantity)) {
+                                    $partial_list[] = $item->service_type; // Actually, all items for this partial delivery? The requirements said "if partial, mentioned the cloths name and rest will be delivered within delivery date"
+                                } elseif (intval($item->delivered_quantity) > 0) {
+                                    $partial_list[] = $item->service_type;
+                                }
+                            }
+                            if (!empty($partial_list)) {
+                                $delivery_items_text = " (" . implode(", ", $partial_list) . ") and the rest will be delivered within the delivery date";
+                            }
                         }
+                        $msg3 = "Hello " . $order->customer_name . ",\nYour items should be delivered today" . $delivery_items_text . ".\nToken: " . $order->token_id . ".\nThank you! — Laugh-O-Laundry\n⭐ Rate your experience: " . lol_review_url( $order->token_id );
+                        $enc3 = rawurlencode($msg3);
+                        $wa_actions .= '<a href="javascript:void(0)" class="lol-wa-btn lol-wa-btn-small" style="background:#0ea5e9;" title="Out for Delivery Alert" onclick="logWaSend('.$order->id.', \''.$order->phone_number.'\', \''.$enc3.'\', this); return false;">🚚 Out for Delivery</a>';
+
+                        // 4. Delivered
+                        $msg4 = "Hello " . $order->customer_name . ",\nYour items have been delivered.\nToken: " . $order->token_id . ".\nThank you for choosing Laugh-O-Laundry!\n⭐ Please leave a review: " . lol_review_url( $order->token_id );
+                        $enc4 = rawurlencode($msg4);
+                        $wa_actions .= '<a href="javascript:void(0)" class="lol-wa-btn lol-wa-btn-small" style="background:#22c55e;" title="Delivered Alert" onclick="logWaSend('.$order->id.', \''.$order->phone_number.'\', \''.$enc4.'\', this); return false;">✅ Delivered</a>';
+
+                        $wa_actions .= '</div>';
                         
                         // Status Dropdown
-                        $statuses = ['Picked Up', 'Partial Delivery', 'Delivered', 'Completed'];
+                        $statuses = ['Picked Up', 'Processing', 'Partial Delivery', 'Partial delivered', 'Delivered', 'Completed'];
                         $status_select = '<select class="lol-status-update" data-token="'.esc_attr($order->token_id).'" style="font-size:11px; padding:0 4px; max-width:100px; margin-top:5px;">';
                         foreach ($statuses as $st) {
                             $selected = ($st === $order->order_status) ? 'selected' : '';
@@ -643,6 +736,24 @@ function lol_admin_orders_page() {
                 <div id="partial-items-container" style="max-height:300px; overflow-y:auto; margin-bottom:15px;"></div>
                 <button type="button" id="btn-save-partial" class="button button-primary">Save Delivery & Notify</button>
                 <button type="button" id="btn-close-partial" class="button" style="margin-left:10px;">Cancel</button>
+            </div>
+        </div>
+
+        <!-- Processing Modal -->
+        <div id="lol-processing-modal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.5); z-index:99999; align-items:center; justify-content:center;">
+            <div style="background:#fff; padding:20px; border-radius:8px; width:400px; max-width:90%; position:relative;">
+                <h2 style="margin-top:0;">Processing Details</h2>
+                <p>Token ID: <strong id="processing-token-id"></strong></p>
+                <div style="margin-bottom:15px;">
+                    <label style="display:block; margin-bottom:5px;">Total Amount (₹)</label>
+                    <input type="number" id="processing-amount" style="width:100%; padding:8px;">
+                </div>
+                <div style="margin-bottom:15px;">
+                    <label style="display:block; margin-bottom:5px;">Delivery Date</label>
+                    <input type="date" id="processing-date" style="width:100%; padding:8px;">
+                </div>
+                <button type="button" id="btn-save-processing" class="button button-primary">Notify Customer & Save</button>
+                <button type="button" id="btn-close-processing" class="button" style="margin-left:10px;">Cancel</button>
             </div>
         </div>
 

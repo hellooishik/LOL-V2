@@ -35,11 +35,8 @@ function lol_ajax_save_pickup() {
     // Format: LOL-YYYYMMDD-XXXX
     $date_prefix = 'LOL-' . current_time('Ymd') . '-';
     
-    // Find the latest token for today
-    $latest_token = $wpdb->get_var($wpdb->prepare(
-        "SELECT token_id FROM $orders_table WHERE token_id LIKE %s ORDER BY id DESC LIMIT 1",
-        $date_prefix . '%'
-    ));
+    // Find the latest token overall to continue the sequence
+    $latest_token = $wpdb->get_var("SELECT token_id FROM $orders_table ORDER BY id DESC LIMIT 1");
 
     if ( $latest_token ) {
         $last_seq = intval( substr($latest_token, -4) );
@@ -518,6 +515,50 @@ function lol_ajax_update_order_status() {
 }
 
 // Save Partial Delivery Modal
+add_action( 'wp_ajax_lol_process_order', 'lol_ajax_process_order' );
+add_action( 'wp_ajax_nopriv_lol_process_order', 'lol_ajax_process_order' );
+
+function lol_ajax_process_order() {
+    global $wpdb;
+    $orders_table = $wpdb->prefix . 'laundry_orders';
+    
+    $token_id = sanitize_text_field( $_POST['token_id'] );
+    $amount = floatval( $_POST['amount'] );
+    $delivery_date = sanitize_text_field( $_POST['delivery_date'] );
+
+    if ( empty($token_id) || empty($delivery_date) ) {
+        wp_send_json_error( array( 'message' => 'Missing parameters.' ) );
+    }
+
+    $order = $wpdb->get_row($wpdb->prepare("SELECT * FROM $orders_table WHERE token_id = %s", $token_id));
+    if ( ! $order ) {
+        wp_send_json_error( array( 'message' => 'Order not found.' ) );
+    }
+
+    $amount_received = floatval($order->amount_received);
+    $balance_due = $amount - $amount_received;
+
+    $wpdb->update(
+        $orders_table,
+        array( 
+            'total_bill_amount' => $amount,
+            'delivery_date' => $delivery_date,
+            'balance_due' => $balance_due,
+            'order_status' => 'Processing'
+        ),
+        array( 'token_id' => $token_id ),
+        array( '%f', '%s', '%f', '%s' ),
+        array( '%s' )
+    );
+
+    wp_send_json_success( array( 
+        'message' => 'Order processed.',
+        'order_id' => $order->id,
+        'phone_number' => $order->phone_number,
+        'customer_name' => $order->customer_name
+    ) );
+}
+
 add_action( 'wp_ajax_lol_save_partial_delivery', 'lol_ajax_save_partial_delivery' );
 add_action( 'wp_ajax_nopriv_lol_save_partial_delivery', 'lol_ajax_save_partial_delivery' );
 
