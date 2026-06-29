@@ -719,7 +719,7 @@ function lol_admin_orders_page() {
                     <td><?php echo lol_payment_badge($order->payment_status); ?></td>
                     <td class="lol-amount-col"><?php echo $amount_html; ?></td>
                     <td class="lol-items-detail"><?php echo $items_html; ?></td><td class="lol-total-clothes" style="text-align:center;font-weight:600;"><?php $lol_total_clothes = 0; if ( isset($all_items[$order->id]) ) { foreach ( $all_items[$order->id] as $lol_ci ) { $lol_total_clothes += intval($lol_ci->quantity); } } echo $lol_total_clothes; ?></td>
-                    <td><?php echo esc_html($order->delivery_boy ? $order->delivery_boy : 'Not Assigned'); ?></td>
+                    <td><?php echo esc_html($order->delivery_boy ? $order->delivery_boy : ($order->pickup_agent_name ? $order->pickup_agent_name : 'Not Assigned')); ?></td>
                     <td><?php echo $wa_actions; ?></td>
                 </tr>
                 <?php endforeach; else : ?>
@@ -867,7 +867,7 @@ function lol_admin_todays_delivery_page() {
                     <td><?php echo lol_payment_badge($order->payment_status); ?></td>
                     <td class="lol-amount-col"><?php echo $amount_html; ?></td>
                     <td class="lol-items-detail"><?php echo $items_html; ?></td>
-                    <td><?php echo esc_html($order->delivery_boy ? $order->delivery_boy : 'Not Assigned'); ?></td>
+                    <td><?php echo esc_html($order->delivery_boy ? $order->delivery_boy : ($order->pickup_agent_name ? $order->pickup_agent_name : 'Not Assigned')); ?></td>
                     <td>
                         <a href="javascript:void(0)" class="lol-wa-btn" onclick="logWaSend(<?php echo $order->id; ?>, '<?php echo esc_js($order->phone_number); ?>', '<?php echo $encoded_msg; ?>', this); return false;">
                             📱 Send Message
