@@ -433,6 +433,9 @@ function lol_ajax_log_whatsapp() {
         }
         $to_number = '+' . $cleanPhone;
         
+        // Remove any leftover 'whatsapp:' prefix from the settings
+        $twilio_number = str_ireplace('whatsapp:', '', $twilio_number);
+        
         // Handle Twilio From number (can be alphanumeric sender ID or phone number)
         if ( is_numeric($twilio_number) && strpos($twilio_number, '+') !== 0 ) {
             $twilio_number = '+' . $twilio_number;
