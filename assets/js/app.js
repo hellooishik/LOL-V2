@@ -227,19 +227,29 @@ jQuery(document).ready(function($) {
                 $('#detail_due').text(amtDueHtml);
 
                 let itemsHtml = '';
+                let isPartial = false;
                 items.forEach(function(item) {
-                    let deliveredValue = item.delivered_quantity ? item.delivered_quantity : item.quantity;
+                    let deliveredValue = item.delivered_quantity ? parseInt(item.delivered_quantity) : parseInt(item.quantity);
+                    if (deliveredValue < parseInt(item.quantity)) {
+                        isPartial = true;
+                    }
                     itemsHtml += `
                         <div class="lol-delivery-item-row" style="display: flex; align-items: center; margin-bottom: 10px; gap: 10px;">
                             <div style="flex: 1;">Picked up: ${item.quantity} x ${item.service_type}</div>
                             <div style="flex: 1;">
                                 <label style="margin-right: 5px;">Delivered Qty:</label>
-                                <input type="number" name="delivered_items[${item.id}]" value="${deliveredValue}" min="0" max="${item.quantity}" style="width: 80px;" class="lol-qty-input">
+                                <input type="number" name="delivered_items[${item.id}]" value="${deliveredValue}" min="0" max="${item.quantity}" style="width: 80px; background-color: #f0f0f0;" class="lol-qty-input" readonly>
                             </div>
                         </div>
                     `;
                 });
                 $('#detail_items_list').html(itemsHtml);
+                
+                if (isPartial) {
+                    $('input[name="delivery_type"][value="Partial"]').prop('checked', true);
+                } else {
+                    $('input[name="delivery_type"][value="Full"]').prop('checked', true);
+                }
 
                 $('#lol-delivery-search').hide();
                 $('#lol-delivery-form').show();
@@ -258,11 +268,15 @@ jQuery(document).ready(function($) {
         var val = $(this).val();
         if (val === 'Paid' || val === 'Partial') {
             $('#amount_group').show();
-            $('#total_bill_amount').prop('required', true);
             $('#amount_received').prop('required', true);
+            if (window.lolCurrentOrderDetails) {
+                 $('#total_bill_amount').val(window.lolCurrentOrderDetails.order.total_bill_amount);
+                 let total = parseFloat($('#total_bill_amount').val()) || 0;
+                 let received = parseFloat($('#amount_received').val()) || 0;
+                 $('#balance_due').val((total - received).toFixed(2));
+            }
         } else {
             $('#amount_group').hide();
-            $('#total_bill_amount').prop('required', false).val('');
             $('#amount_received').prop('required', false).val('');
             $('#balance_due').val('');
         }

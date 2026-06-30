@@ -175,7 +175,17 @@ function lol_ajax_save_delivery() {
     $old_order = $wpdb->get_row($wpdb->prepare("SELECT * FROM $orders_table WHERE token_id = %s", $token_id));
     $old_received = $old_order ? floatval($old_order->amount_received) : 0;
     
-    $amount_collected_now = $amount_received - $old_received;
+    // Fallback to existing bill amount if not provided
+    if ($total_bill_amount <= 0 && $old_order) {
+        $total_bill_amount = floatval($old_order->total_bill_amount);
+    }
+    // Fallback to existing amount received if not provided
+    if (empty($_POST['amount_received']) && $old_order) {
+        $amount_received = $old_received;
+    }
+    
+    $balance_due = max(0, $total_bill_amount - $amount_received);
+    $amount_collected_now = max(0, $amount_received - $old_received);
 
     $updated = $wpdb->update(
         $orders_table,
