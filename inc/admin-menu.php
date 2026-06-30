@@ -672,13 +672,18 @@ function lol_admin_orders_page() {
                         // WhatsApp alerts
                         $wa_actions = '<div style="display:flex; flex-direction:column; gap:4px;">';
 
+                        $review_link_text = "\n\nIf you have any review or feedback for us, please give it by clicking this link: https://lol.infizestpublishings.com/?lol_review=" . $order->token_id;
+
                         // 1. Picked Up
-                        $msg1 = "Hello " . $order->customer_name . ",\nYour item is picked up.\nToken: " . $order->token_id . ".\nThank you! — Laugh-O-Laundry";
+                        $msg1 = "Hello " . $order->customer_name . ",\nYour item is picked up.\nToken: " . $order->token_id . ".\nThank you! — Team Laugh-O-Laundry" . $review_link_text;
                         $enc1 = rawurlencode($msg1);
                         $wa_actions .= '<a href="javascript:void(0)" class="lol-wa-btn lol-wa-btn-small" style="background:#64748b;" title="Picked Up Alert" onclick="logWaSend('.$order->id.', \''.$order->phone_number.'\', \''.$enc1.'\', this); return false;">📦 Picked Up</a>';
 
                         // 2. Processing
-                        $msg2 = "Hello " . $order->customer_name . ",\nYour item is in processing.\nToken: " . $order->token_id . ".\nThank you! — Laugh-O-Laundry";
+                        $amount_text = ($order->total_bill_amount > 0) ? "\nTotal Amount Payable: ₹" . number_format($order->total_bill_amount, 2) : "";
+                        $due_date_text = ($order->delivery_date && $order->delivery_date !== '0000-00-00') ? "\nExpected Delivery Date: " . date_i18n( get_option('date_format'), strtotime($order->delivery_date) ) : "\nExpected Delivery Date: within 3-4 days";
+
+                        $msg2 = "Hello " . $order->customer_name . ",\nYour item is in processing." . $due_date_text . $amount_text . "\nToken: " . $order->token_id . ".\nThank you! — Team Laugh-O-Laundry" . $review_link_text;
                         $enc2 = rawurlencode($msg2);
                         $wa_actions .= '<a href="javascript:void(0)" class="lol-wa-btn lol-wa-btn-small" style="background:#eab308;" title="Processing Alert" onclick="logWaSend('.$order->id.', \''.$order->phone_number.'\', \''.$enc2.'\', this); return false;">⚙️ Processing</a>';
 
@@ -688,7 +693,7 @@ function lol_admin_orders_page() {
                             $partial_list = [];
                             foreach ($all_items[$order->id] as $item) {
                                 if (intval($item->delivered_quantity) > 0 && intval($item->quantity) > intval($item->delivered_quantity)) {
-                                    $partial_list[] = $item->service_type; // Actually, all items for this partial delivery? The requirements said "if partial, mentioned the cloths name and rest will be delivered within delivery date"
+                                    $partial_list[] = $item->service_type; 
                                 } elseif (intval($item->delivered_quantity) > 0) {
                                     $partial_list[] = $item->service_type;
                                 }
@@ -697,12 +702,12 @@ function lol_admin_orders_page() {
                                 $delivery_items_text = " (" . implode(", ", $partial_list) . ") and the rest will be delivered within the delivery date";
                             }
                         }
-                        $msg3 = "Hello " . $order->customer_name . ",\nYour items should be delivered today" . $delivery_items_text . ".\nToken: " . $order->token_id . ".\nThank you! — Laugh-O-Laundry\n⭐ Rate your experience: " . lol_review_url( $order->token_id );
+                        $msg3 = "Hello " . $order->customer_name . ",\nYour items should be delivered today" . $delivery_items_text . ".\nToken: " . $order->token_id . ".\nThank you! — Team Laugh-O-Laundry" . $review_link_text;
                         $enc3 = rawurlencode($msg3);
                         $wa_actions .= '<a href="javascript:void(0)" class="lol-wa-btn lol-wa-btn-small" style="background:#0ea5e9;" title="Out for Delivery Alert" onclick="logWaSend('.$order->id.', \''.$order->phone_number.'\', \''.$enc3.'\', this); return false;">🚚 Out for Delivery</a>';
 
                         // 4. Delivered
-                        $msg4 = "Hello " . $order->customer_name . ",\nYour items have been delivered.\nToken: " . $order->token_id . ".\nThank you for choosing Laugh-O-Laundry!\n⭐ Please leave a review: " . lol_review_url( $order->token_id );
+                        $msg4 = "Hello " . $order->customer_name . ",\nYour items have been delivered.\nToken: " . $order->token_id . ".\nThank you for choosing Team Laugh-O-Laundry!" . $review_link_text;
                         $enc4 = rawurlencode($msg4);
                         $wa_actions .= '<a href="javascript:void(0)" class="lol-wa-btn lol-wa-btn-small" style="background:#22c55e;" title="Delivered Alert" onclick="logWaSend('.$order->id.', \''.$order->phone_number.'\', \''.$enc4.'\', this); return false;">✅ Delivered</a>';
 

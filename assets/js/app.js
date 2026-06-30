@@ -141,8 +141,10 @@ jQuery(document).ready(function($) {
                 }
                 $('#success-total-clothes').text(totalClothes);
                 
+                let reviewLinkText = `\n\nIf you have any review or feedback for us, please give it by clicking this link: https://lol.infizestpublishings.com/?lol_review=${data.token_id}`;
+
                 // Set SMS Send button logic
-                let waMessage = `Hello ${data.customer_name},\n\nWe have received your clothes.\n\nTotal Garments Received: ${totalClothes}\nItem Details:\n${itemsListText}\nExpected delivery: within 3–4 days.\nOrder Status: Processing\n\nToken ID: ${data.token_id}\n\nTeam Laugh-O-Laundry`;
+                let waMessage = `Hello ${data.customer_name},\n\nWe have received your clothes.\n\nTotal Garments Received: ${totalClothes}\nItem Details:\n${itemsListText}\nExpected delivery: within 3–4 days.\nOrder Status: Processing\n\nToken ID: ${data.token_id}\n\nTeam Laugh-O-Laundry${reviewLinkText}`;
                 $('#btn-wa-pickup').off('click').on('click', function() {
                     openWhatsAppAndLog(data.order_id || 0, data.phone_number, waMessage);
                 });
@@ -326,10 +328,12 @@ jQuery(document).ready(function($) {
                     }
                 });
 
+                let reviewLinkText = `\n\nIf you have any review or feedback for us, please give it by clicking this link: https://lol.infizestpublishings.com/?lol_review=${tId}`;
+
                 if (deliveryType === 'Partial') {
-                    waMessage = `Hello ${cName},\n\nA partial delivery of your laundry has been completed today.\n\nDelivered Garments (${totalDelivered}):\n${itemsListText}\nRemaining Garments (${totalRemaining}):\n${remainingListText}\nExpected delivery: on the due date.\nOrder Status: Partial Delivery\n\nToken ID: ${tId}\n\nTeam Laugh-O-Laundry`;
+                    waMessage = `Hello ${cName},\n\nA partial delivery of your laundry has been completed today.\n\nDelivered Garments (${totalDelivered}):\n${itemsListText}\nRemaining Garments (${totalRemaining}):\n${remainingListText}\nExpected delivery: on the due date.\nOrder Status: Partial Delivery\n\nToken ID: ${tId}\n\nTeam Laugh-O-Laundry${reviewLinkText}`;
                 } else {
-                    waMessage = `Hello ${cName},\n\nYour laundry order has been successfully delivered!\n\nDelivered Garments (${totalDelivered}):\n${itemsListText}\nOrder Status: Delivered\n\nToken ID: ${tId}\n\nTeam Laugh-O-Laundry`;
+                    waMessage = `Hello ${cName},\n\nYour laundry order has been successfully delivered!\n\nDelivered Garments (${totalDelivered}):\n${itemsListText}\nOrder Status: Delivered\n\nToken ID: ${tId}\n\nTeam Laugh-O-Laundry${reviewLinkText}`;
                 }
 
                 // Show a button to send SMS instead of redirecting immediately
