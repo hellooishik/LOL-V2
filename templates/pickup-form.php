@@ -56,6 +56,7 @@
                     </div>
                     <div class="lol-item-urgent-row" style="margin-top: 8px; display: flex; align-items: center; gap: 10px;">
                         <label style="margin: 0; font-weight: normal;"><input type="checkbox" name="items[0][is_urgent]" value="1" class="lol-urgent-checkbox"> Urgent Need</label>
+                        <input type="number" name="items[0][urgent_quantity]" class="lol-urgent-qty" placeholder="Urgent Qty" style="display:none; width: 90px; padding: 4px;" min="1">
                         <input type="date" name="items[0][urgent_delivery_date]" class="lol-urgent-date" style="display:none; padding: 5px;">
                     </div>
                 </div>

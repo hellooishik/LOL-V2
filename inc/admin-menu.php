@@ -65,6 +65,15 @@ function lol_admin_menu() {
 
     add_submenu_page(
         'lol-laundry-management',
+        'Partial Delivery Check',
+        '🔍 Partial Delivery Check',
+        'manage_options',
+        'lol-partial-delivery-check',
+        'lol_admin_partial_delivery_check_page'
+    );
+
+    add_submenu_page(
+        'lol-laundry-management',
         'Export Excel',
         'Export Excel',
         'manage_options',
@@ -1341,8 +1350,9 @@ function lol_admin_all_pickups_page() {
                         foreach ( $all_items[$order->id] as $item ) {
                             $total_clothes += intval($item->quantity);
                             if ( $item->is_urgent == 1 ) {
+                                $urgent_qty_text = intval($item->urgent_quantity) > 0 ? "Qty: " . intval($item->urgent_quantity) : 'All';
                                 $urgent_date = $item->urgent_delivery_date ? esc_html($item->urgent_delivery_date) : 'No Date';
-                                $urgent_info[] = "<span style='color: #dc2626; font-weight: 600;'>Yes (" . esc_html($item->service_type) . " - " . $urgent_date . ")</span>";
+                                $urgent_info[] = "<span style='color: #dc2626; font-weight: 600;'>Yes (" . esc_html($item->service_type) . " - " . $urgent_qty_text . " - " . $urgent_date . ")</span>";
                             }
                         }
                     }
@@ -1417,6 +1427,100 @@ function lol_admin_settings_page() {
                 <input type="submit" name="submit" id="submit" class="button button-primary" value="Save Changes">
             </p>
         </form>
+    </div>
+    <?php
+}
+
+function lol_admin_partial_delivery_check_page() {
+    global $wpdb;
+    $orders_table = $wpdb->prefix . 'laundry_orders';
+    $items_table = $wpdb->prefix . 'laundry_order_items';
+
+    $token_id = isset($_POST['token_id']) ? sanitize_text_field($_POST['token_id']) : '';
+    $order = null;
+    $items = array();
+
+    if (!empty($token_id)) {
+        if (strlen($token_id) === 4 && is_numeric($token_id)) {
+            $order = $wpdb->get_row($wpdb->prepare(
+                "SELECT * FROM $orders_table WHERE token_id LIKE %s ORDER BY id DESC LIMIT 1",
+                '%-' . $token_id
+            ));
+        } else {
+            $order = $wpdb->get_row($wpdb->prepare(
+                "SELECT * FROM $orders_table WHERE token_id = %s",
+                $token_id
+            ));
+        }
+
+        if ($order) {
+            $items = $wpdb->get_results($wpdb->prepare(
+                "SELECT * FROM $items_table WHERE order_id = %d",
+                $order->id
+            ));
+        }
+    }
+
+    lol_admin_page_styles();
+    ?>
+    <div class="wrap">
+        <h1>🔍 Partial Delivery Checking Center</h1>
+        <p>Enter a Token ID to check the remaining items for delivery.</p>
+
+        <form method="post" style="margin-bottom: 20px; background: #fff; padding: 20px; border-radius: 8px; border: 1px solid #e5e7eb; display: inline-block;">
+            <label for="token_id" style="font-weight: bold; margin-right: 10px;">Token ID or last 4 digits:</label>
+            <input type="text" name="token_id" id="token_id" value="<?php echo esc_attr($token_id); ?>" style="padding: 6px; width: 250px;">
+            <button type="submit" class="button button-primary">Check Items</button>
+        </form>
+
+        <?php if (!empty($token_id)) : ?>
+            <?php if ($order) : ?>
+                <div style="background: #fff; padding: 20px; border-radius: 8px; border: 1px solid #e5e7eb; max-width: 600px;">
+                    <h2 style="margin-top: 0; padding-bottom: 10px; border-bottom: 1px solid #eee;">Order Details: <strong><?php echo esc_html($order->token_id); ?></strong></h2>
+                    <p><strong>Customer:</strong> <?php echo esc_html($order->customer_name); ?></p>
+                    <p><strong>Status:</strong> <?php echo lol_status_badge($order->order_status); ?></p>
+                    <p><strong>Pickup Date:</strong> <?php echo esc_html($order->pickup_date); ?></p>
+
+                    <h3 style="margin-top: 20px;">Remaining Items to Deliver</h3>
+                    <table class="wp-list-table widefat fixed striped">
+                        <thead>
+                            <tr>
+                                <th>Service Type</th>
+                                <th>Total Qty</th>
+                                <th>Delivered Qty</th>
+                                <th>Remaining Qty</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <?php 
+                            $has_remaining = false;
+                            foreach ($items as $item) : 
+                                $remaining = intval($item->quantity) - intval($item->delivered_quantity);
+                                if ($remaining > 0) :
+                                    $has_remaining = true;
+                            ?>
+                                <tr>
+                                    <td><?php echo esc_html($item->service_type); ?></td>
+                                    <td><?php echo intval($item->quantity); ?></td>
+                                    <td><?php echo intval($item->delivered_quantity); ?></td>
+                                    <td style="color: #dc2626; font-weight: bold;"><?php echo $remaining; ?></td>
+                                </tr>
+                            <?php endif; endforeach; ?>
+                            
+                            <?php if (!$has_remaining) : ?>
+                                <tr>
+                                    <td colspan="4" style="text-align: center; color: #16a34a; font-weight: bold;">All items have been delivered!</td>
+                                </tr>
+                            <?php endif; ?>
+                        </tbody>
+                    </table>
+                </div>
+            <?php else : ?>
+                <div style="background: #fee2e2; border: 1px solid #ef4444; color: #b91c1c; padding: 15px; border-radius: 5px; display: inline-block;">
+                    Order not found. Please verify the Token ID.
+                </div>
+            <?php endif; ?>
+        <?php endif; ?>
     </div>
     <?php
 }

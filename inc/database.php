@@ -47,6 +47,7 @@ function lol_create_custom_tables() {
         delivered_quantity int(11) DEFAULT 0 NOT NULL,
         service_type varchar(100) NOT NULL,
         is_urgent tinyint(1) DEFAULT 0 NOT NULL,
+        urgent_quantity int(11) DEFAULT 0 NOT NULL,
         urgent_delivery_date date NULL,
         created_at datetime DEFAULT CURRENT_TIMESTAMP NOT NULL,
         PRIMARY KEY  (id),

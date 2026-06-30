@@ -315,3 +315,10 @@ function lol_admin_reviews_page() {
     }
     echo '</tbody></table></div>';
 }
+
+add_action('admin_init', function() {
+    if (!get_option('lol_db_updated_urgent_quantity')) {
+        lol_create_custom_tables();
+        update_option('lol_db_updated_urgent_quantity', '1');
+    }
+});

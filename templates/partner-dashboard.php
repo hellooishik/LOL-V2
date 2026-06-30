@@ -28,10 +28,6 @@
             EDIT ORDER
         </button>
 
-        <button id="btn-show-all-pickups" class="lol-main-btn lol-btn-all-pickups" style="background: #8B5CF6; border-color: #8B5CF6;">
-            <span class="icon">📋</span>
-            ALL PICKUPS
-        </button>
     </div>
 
     <!-- Pickup View -->
@@ -84,27 +80,6 @@
         </form>
     </div>
 
-    <!-- All Pickups View -->
-    <div id="lol-all-pickups-view" class="lol-view">
-        <button class="lol-back-btn">← Back</button>
-        <h2>All Pickups</h2>
-        <div class="lol-all-pickups-container" style="overflow-x: auto; margin-top: 15px;">
-            <table class="lol-table" style="width: 100%; border-collapse: collapse; text-align: left;">
-                <thead>
-                    <tr style="background: #f1f5f9; border-bottom: 2px solid #e2e8f0;">
-                        <th style="padding: 10px;">Date</th>
-                        <th style="padding: 10px;">Token ID</th>
-                        <th style="padding: 10px;">Customer</th>
-                        <th style="padding: 10px;">Phone</th>
-                        <th style="padding: 10px;">Total Clothes</th>
-                        <th style="padding: 10px;">Status</th>
-                    </tr>
-                </thead>
-                <tbody id="lol-all-pickups-body">
-                    <tr><td colspan="6" style="text-align:center; padding: 20px;">Loading pickups...</td></tr>
-                </tbody>
-            </table>
-        </div>
-    </div>
+    <!-- All Pickups View has been removed -->
 
 </div>

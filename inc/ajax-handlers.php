@@ -68,6 +68,7 @@ function lol_ajax_save_pickup() {
         // Insert Items
         foreach ( $items as $item ) {
             $is_urgent = isset($item['is_urgent']) && $item['is_urgent'] === '1' ? 1 : 0;
+            $urgent_quantity = ($is_urgent && isset($item['urgent_quantity'])) ? intval($item['urgent_quantity']) : 0;
             $urgent_delivery_date = ($is_urgent && !empty($item['urgent_delivery_date'])) ? sanitize_text_field($item['urgent_delivery_date']) : null;
             
             $wpdb->insert(
@@ -77,9 +78,10 @@ function lol_ajax_save_pickup() {
                     'quantity' => intval( $item['quantity'] ),
                     'service_type' => sanitize_text_field( $item['service_type'] ),
                     'is_urgent' => $is_urgent,
+                    'urgent_quantity' => $urgent_quantity,
                     'urgent_delivery_date' => $urgent_delivery_date
                 ),
-                array('%d', '%d', '%s', '%d', '%s')
+                array('%d', '%d', '%s', '%d', '%d', '%s')
             );
         }
 
@@ -334,6 +336,7 @@ function lol_ajax_save_edited_order() {
         // Insert new items
         foreach ( $items as $item ) {
             $is_urgent = isset($item['is_urgent']) && $item['is_urgent'] === '1' ? 1 : 0;
+            $urgent_quantity = ($is_urgent && isset($item['urgent_quantity'])) ? intval($item['urgent_quantity']) : 0;
             $urgent_delivery_date = ($is_urgent && !empty($item['urgent_delivery_date'])) ? sanitize_text_field($item['urgent_delivery_date']) : null;
             
             $wpdb->insert(
@@ -343,9 +346,10 @@ function lol_ajax_save_edited_order() {
                     'quantity' => intval( $item['quantity'] ),
                     'service_type' => sanitize_text_field( $item['service_type'] ),
                     'is_urgent' => $is_urgent,
+                    'urgent_quantity' => $urgent_quantity,
                     'urgent_delivery_date' => $urgent_delivery_date
                 ),
-                array('%d', '%d', '%s', '%d', '%s')
+                array('%d', '%d', '%s', '%d', '%d', '%s')
             );
         }
 
@@ -422,9 +426,7 @@ function lol_ajax_log_whatsapp() {
     $sid = trim(get_option('twilio_account_sid', ''));
     $token = trim(get_option('twilio_auth_token', ''));
     $twilio_number = trim(get_option('twilio_whatsapp_number', ''));
-
     $api_status = 'Sent via wa.me'; // Default fallback
-
     if ( ! empty($sid) && ! empty($token) && ! empty($twilio_number) ) {
         // Format destination number
         $cleanPhone = preg_replace('/[^0-9]/', '', $phone_number);

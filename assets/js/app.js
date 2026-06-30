@@ -49,8 +49,10 @@ jQuery(document).ready(function($) {
     $(document).on('change', '.lol-urgent-checkbox', function() {
         if ($(this).is(':checked')) {
             $(this).closest('.lol-item-urgent-row').find('.lol-urgent-date').show().prop('required', true);
+            $(this).closest('.lol-item-urgent-row').find('.lol-urgent-qty').show().prop('required', true);
         } else {
             $(this).closest('.lol-item-urgent-row').find('.lol-urgent-date').hide().prop('required', false).val('');
+            $(this).closest('.lol-item-urgent-row').find('.lol-urgent-qty').hide().prop('required', false).val('');
         }
     });
 
@@ -82,6 +84,7 @@ jQuery(document).ready(function($) {
                 </div>
                 <div class="lol-item-urgent-row" style="margin-top: 8px; display: flex; align-items: center; gap: 10px;">
                     <label style="margin: 0; font-weight: normal;"><input type="checkbox" name="items[${itemIndex}][is_urgent]" value="1" class="lol-urgent-checkbox"> Urgent Need</label>
+                    <input type="number" name="items[${itemIndex}][urgent_quantity]" class="lol-urgent-qty" placeholder="Urgent Qty" style="display:none; width: 90px; padding: 4px;" min="1">
                     <input type="date" name="items[${itemIndex}][urgent_delivery_date]" class="lol-urgent-date" style="display:none; padding: 5px;">
                 </div>
             </div>
@@ -124,15 +127,22 @@ jQuery(document).ready(function($) {
                 $('#success-date').text(data.pickup_date);
 
                 let totalClothes = 0;
+                let itemsListText = '';
                 if(data.items && Array.isArray(data.items)) {
-                     data.items.forEach(item => totalClothes += parseInt(item.quantity) || 0);
+                     data.items.forEach(item => {
+                         totalClothes += parseInt(item.quantity) || 0;
+                         itemsListText += `- ${item.quantity}x ${item.service_type}\n`;
+                     });
                 } else if(data.items) {
-                     Object.values(data.items).forEach(item => totalClothes += parseInt(item.quantity) || 0);
+                     Object.values(data.items).forEach(item => {
+                         totalClothes += parseInt(item.quantity) || 0;
+                         itemsListText += `- ${item.quantity}x ${item.service_type}\n`;
+                     });
                 }
                 $('#success-total-clothes').text(totalClothes);
                 
                 // Set SMS Send button logic
-                let waMessage = `Hello ${data.customer_name},\nWe have successfully picked up your clothes.\nYour order is now being processed and is expected to be delivered within 3–4 days.\nThank you for choosing our laundry service.\nToken: ${data.token_id}\nHave a great day!`;
+                let waMessage = `Hello ${data.customer_name},\n\nWe have received your clothes.\n\nTotal Garments Received: ${totalClothes}\nItem Details:\n${itemsListText}\nExpected delivery: within 3–4 days.\nOrder Status: Processing\n\nToken ID: ${data.token_id}\n\nTeam Laugh-O-Laundry`;
                 $('#btn-wa-pickup').off('click').on('click', function() {
                     openWhatsAppAndLog(data.order_id || 0, data.phone_number, waMessage);
                 });
@@ -171,6 +181,7 @@ jQuery(document).ready(function($) {
 
 
     // --- Delivery Form Logic --- //
+    window.lolCurrentOrderDetails = null;
     $('#btn-search-token').click(function() {
         let token = $('#search_token').val().trim();
         let $msg = $('#search-message');
@@ -192,6 +203,8 @@ jQuery(document).ready(function($) {
             if (response.success) {
                 let order = response.data.order;
                 let items = response.data.items;
+
+                window.lolCurrentOrderDetails = { order: order, items: items };
 
                 $('#delivery_token_id').val(order.token_id);
                 $('#customer_phone_hidden').val(order.phone_number);
@@ -293,10 +306,30 @@ jQuery(document).ready(function($) {
                 $msg.addClass('success').text(response.data.message).show();
                 
                 let waMessage = '';
+                let orderItems = window.lolCurrentOrderDetails ? window.lolCurrentOrderDetails.items : [];
+                let itemsListText = '';
+                let remainingListText = '';
+                let totalDelivered = 0;
+                let totalRemaining = 0;
+
+                orderItems.forEach(item => {
+                    let inputVal = parseInt($(`input[name="delivered_items[${item.id}]"]`).val()) || 0;
+                    let remaining = parseInt(item.quantity) - inputVal;
+                    
+                    if (inputVal > 0) {
+                        itemsListText += `- ${inputVal}x ${item.service_type}\n`;
+                        totalDelivered += inputVal;
+                    }
+                    if (remaining > 0) {
+                        remainingListText += `- ${remaining}x ${item.service_type}\n`;
+                        totalRemaining += remaining;
+                    }
+                });
+
                 if (deliveryType === 'Partial') {
-                    waMessage = `Hello ${cName},\n\nA partial delivery of your laundry has been completed today.\nThe remaining items are still being processed and will be delivered on the due date.\n\nThank you for your patience.\nToken: ${tId}`;
+                    waMessage = `Hello ${cName},\n\nA partial delivery of your laundry has been completed today.\n\nDelivered Garments (${totalDelivered}):\n${itemsListText}\nRemaining Garments (${totalRemaining}):\n${remainingListText}\nExpected delivery: on the due date.\nOrder Status: Partial Delivery\n\nToken ID: ${tId}\n\nTeam Laugh-O-Laundry`;
                 } else {
-                    waMessage = `Hello ${cName},\n\nYour laundry order has been successfully delivered.\nThank you for choosing our laundry service.\nWe look forward to serving you again.\nToken: ${tId}`;
+                    waMessage = `Hello ${cName},\n\nYour laundry order has been successfully delivered!\n\nDelivered Garments (${totalDelivered}):\n${itemsListText}\nOrder Status: Delivered\n\nToken ID: ${tId}\n\nTeam Laugh-O-Laundry`;
                 }
 
                 // Show a button to send SMS instead of redirecting immediately
@@ -380,6 +413,7 @@ jQuery(document).ready(function($) {
                             </div>
                             <div class="lol-item-urgent-row" style="margin-top: 8px; display: flex; align-items: center; gap: 10px;">
                                 <label style="margin: 0; font-weight: normal;"><input type="checkbox" name="items[${editItemIndex}][is_urgent]" value="1" class="lol-urgent-checkbox" ${item.is_urgent == 1 ? 'checked' : ''}> Urgent Need</label>
+                                <input type="number" name="items[${editItemIndex}][urgent_quantity]" class="lol-urgent-qty" placeholder="Urgent Qty" style="${item.is_urgent == 1 ? '' : 'display:none;'} width: 90px; padding: 4px;" min="1" value="${item.urgent_quantity || ''}">
                                 <input type="date" name="items[${editItemIndex}][urgent_delivery_date]" class="lol-urgent-date" style="${item.is_urgent == 1 ? '' : 'display:none;'} padding: 5px;" value="${item.urgent_delivery_date || ''}">
                             </div>
                         </div>
@@ -426,6 +460,7 @@ jQuery(document).ready(function($) {
                 </div>
                 <div class="lol-item-urgent-row" style="margin-top: 8px; display: flex; align-items: center; gap: 10px;">
                     <label style="margin: 0; font-weight: normal;"><input type="checkbox" name="items[${editItemIndex}][is_urgent]" value="1" class="lol-urgent-checkbox"> Urgent Need</label>
+                    <input type="number" name="items[${editItemIndex}][urgent_quantity]" class="lol-urgent-qty" placeholder="Urgent Qty" style="display:none; width: 90px; padding: 4px;" min="1">
                     <input type="date" name="items[${editItemIndex}][urgent_delivery_date]" class="lol-urgent-date" style="display:none; padding: 5px;">
                 </div>
             </div>
@@ -460,43 +495,7 @@ jQuery(document).ready(function($) {
         });
     });
 
-    // --- All Pickups View Logic --- //
-    $('#btn-show-all-pickups').click(function() {
-        $('.lol-view').removeClass('active-view');
-        $('#lol-all-pickups-view').addClass('active-view');
-
-        let $body = $('#lol-all-pickups-body');
-        $body.html('<tr><td colspan="6" style="text-align:center; padding: 20px;">Loading pickups...</td></tr>');
-
-        $.post(lol_ajax_obj.ajax_url, {
-            action: 'lol_get_all_pickups',
-            nonce: lol_ajax_obj.nonce
-        }, function(response) {
-            if (response.success) {
-                let pickups = response.data.pickups;
-                let html = '';
-                if (pickups.length === 0) {
-                    html = '<tr><td colspan="6" style="text-align:center; padding: 20px;">No pickups found.</td></tr>';
-                } else {
-                    pickups.forEach(function(p) {
-                        html += `
-                            <tr style="border-bottom: 1px solid #e2e8f0;">
-                                <td style="padding: 10px;">${p.pickup_date}</td>
-                                <td style="padding: 10px;"><strong>${p.token_id}</strong></td>
-                                <td style="padding: 10px;">${p.customer_name}</td>
-                                <td style="padding: 10px;">${p.phone_number}</td>
-                                <td style="padding: 10px;">${p.total_items || 0}</td>
-                                <td style="padding: 10px;">${p.order_status}</td>
-                            </tr>
-                        `;
-                    });
-                }
-                $body.html(html);
-            } else {
-                $body.html('<tr><td colspan="6" style="text-align:center; padding: 20px; color: red;">Failed to load.</td></tr>');
-            }
-        });
-    });
+    // All Pickups logic has been removed from frontend
 
     // --- Background Excel Updater --- //
     function updateExcelWithOrder(actionType, orderData) {
