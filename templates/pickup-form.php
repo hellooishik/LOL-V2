@@ -82,7 +82,7 @@
 
         <div class="lol-success-actions">
             <button id="btn-copy-token" class="lol-btn-secondary">Copy Token</button>
-            <button id="btn-wa-pickup" class="lol-btn-secondary" style="background-color: #25D366; color: white; border-color: #25D366;">WhatsApp Confirm</button>
+            <button id="btn-wa-pickup" class="lol-btn-secondary" style="background-color: #25D366; color: white; border-color: #25D366;">SMS Confirm</button>
             <button id="btn-new-pickup" class="lol-btn-primary">New Pickup</button>
         </div>
     </div>

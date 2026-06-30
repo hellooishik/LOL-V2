@@ -83,8 +83,8 @@ function lol_admin_menu() {
 
     add_submenu_page(
         'lol-laundry-management',
-        'WhatsApp Logs',
-        'WhatsApp Logs',
+        'SMS Logs',
+        'SMS Logs',
         'manage_options',
         'lol-whatsapp-logs',
         'lol_admin_whatsapp_logs_page'
@@ -1117,8 +1117,8 @@ function lol_admin_whatsapp_logs_page() {
     lol_admin_page_styles();
     ?>
     <div class="wrap">
-        <h1>WhatsApp Logs (wa.me)</h1>
-        <p>This page shows all the WhatsApp messages that users clicked to send via the wa.me integration.</p>
+        <h1>SMS Logs</h1>
+        <p>This page shows all the SMS messages that were sent via Twilio.</p>
 
         <table class="wp-list-table widefat fixed striped">
             <thead>
@@ -1388,7 +1388,7 @@ function lol_admin_settings_page() {
     ?>
     <div class="wrap">
         <h1>⚙️ Twilio Settings</h1>
-        <p>Enter your Twilio API credentials to enable centralized WhatsApp messaging.</p>
+        <p>Enter your Twilio API credentials to enable centralized SMS messaging.</p>
         
         <form method="post" action="">
             <?php wp_nonce_field('lol_save_settings', 'lol_settings_nonce'); ?>
@@ -1406,10 +1406,10 @@ function lol_admin_settings_page() {
                     </td>
                 </tr>
                 <tr>
-                    <th scope="row"><label for="twilio_whatsapp_number">Twilio Number (SMS or WhatsApp)</label></th>
+                    <th scope="row"><label for="twilio_whatsapp_number">Twilio SMS Number</label></th>
                     <td>
-                        <input name="twilio_whatsapp_number" type="text" id="twilio_whatsapp_number" value="<?php echo esc_attr($number); ?>" class="regular-text" placeholder="e.g. +18129955938 or whatsapp:+14155238886">
-                        <p class="description">Enter your Twilio phone number for SMS (e.g. <code>+18129955938</code>). For WhatsApp, include the prefix (e.g. <code>whatsapp:+14155238886</code>).</p>
+                        <input name="twilio_whatsapp_number" type="text" id="twilio_whatsapp_number" value="<?php echo esc_attr($number); ?>" class="regular-text" placeholder="e.g. +18129955938">
+                        <p class="description">Enter your Twilio sender phone number.</p>
                     </td>
                 </tr>
             </table>

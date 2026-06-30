@@ -131,7 +131,7 @@ jQuery(document).ready(function($) {
                 }
                 $('#success-total-clothes').text(totalClothes);
                 
-                // Set WhatsApp Send button logic
+                // Set SMS Send button logic
                 let waMessage = `Hello ${data.customer_name},\nWe have successfully picked up your clothes.\nYour order is now being processed and is expected to be delivered within 3–4 days.\nThank you for choosing our laundry service.\nToken: ${data.token_id}\nHave a great day!`;
                 $('#btn-wa-pickup').off('click').on('click', function() {
                     openWhatsAppAndLog(data.order_id || 0, data.phone_number, waMessage);
@@ -299,8 +299,8 @@ jQuery(document).ready(function($) {
                     waMessage = `Hello ${cName},\n\nYour laundry order has been successfully delivered.\nThank you for choosing our laundry service.\nWe look forward to serving you again.\nToken: ${tId}`;
                 }
 
-                // Show a button to send WhatsApp instead of redirecting immediately
-                $msg.html(`Delivery saved successfully! <button type="button" id="btn-wa-delivery" class="lol-btn-secondary" style="margin-top:10px;">Send Delivery WhatsApp</button>`);
+                // Show a button to send SMS instead of redirecting immediately
+                $msg.html(`Delivery saved successfully! <button type="button" id="btn-wa-delivery" class="lol-btn-secondary" style="margin-top:10px;">Send Delivery SMS</button>`);
                 
                 $('#btn-wa-delivery').on('click', function() {
                     openWhatsAppAndLog(0, cPhone, waMessage);
@@ -310,7 +310,7 @@ jQuery(document).ready(function($) {
                     if($('#lol-delivery-view').hasClass('active-view')) {
                         $('.lol-back-btn').click(); // Go back to main menu
                     }
-                }, 5000); // Give them 5 seconds to click WhatsApp before auto-back
+                }, 5000); // Give them 5 seconds to click SMS before auto-back
             } else {
                 $msg.addClass('error').text(response.data.message).show();
                 $btn.prop('disabled', false).text('MARK AS DELIVERED');
@@ -615,7 +615,7 @@ jQuery(document).ready(function($) {
     .catch(err => console.error('Excel fetch error:', err));
 }
 
-// --- WhatsApp Logic --- //
+// --- SMS Logic --- //
 function openWhatsAppAndLog(orderId, phone, message) {
     let cleanPhone = phone.replace(/[^0-9]/g, '');
     if (cleanPhone.length === 10) cleanPhone = '91' + cleanPhone;

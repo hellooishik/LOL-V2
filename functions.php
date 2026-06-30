@@ -311,7 +311,7 @@ function lol_admin_reviews_page() {
             echo '</tr>';
         }
     } else {
-        echo '<tr><td colspan="5" style="text-align:center;padding:24px;color:#64748b;">No reviews submitted yet. Reviews will appear here once customers click the feedback link in their WhatsApp message.</td></tr>';
+        echo '<tr><td colspan="5" style="text-align:center;padding:24px;color:#64748b;">No reviews submitted yet. Reviews will appear here once customers click the feedback link in their SMS message.</td></tr>';
     }
     echo '</tbody></table></div>';
 }

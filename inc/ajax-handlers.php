@@ -431,12 +431,12 @@ function lol_ajax_log_whatsapp() {
         if ( strlen($cleanPhone) === 10 ) {
             $cleanPhone = '91' . $cleanPhone;
         }
+        $to_number = '+' . $cleanPhone;
         
-        // Force WhatsApp prefix
-        $clean_twilio = preg_replace('/[^0-9]/', '', $twilio_number);
-        $twilio_number = 'whatsapp:+' . $clean_twilio;
-        
-        $to_number = 'whatsapp:+' . $cleanPhone;
+        // Handle Twilio From number (can be alphanumeric sender ID or phone number)
+        if ( is_numeric($twilio_number) && strpos($twilio_number, '+') !== 0 ) {
+            $twilio_number = '+' . $twilio_number;
+        }
 
         $url = "https://api.twilio.com/2010-04-01/Accounts/$sid/Messages.json";
         
