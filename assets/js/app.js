@@ -73,6 +73,7 @@ jQuery(document).ready(function($) {
                             <option value="Dry clean">Dry clean</option>
                             <option value="Stain removal">Stain removal</option>
                             <option value="Iron and pressing">Iron and pressing</option>
+                            <option value="Polish">Polish</option>
                         </select>
                     </div>
                     <div class="lol-item-col lol-remove-col">
@@ -370,6 +371,7 @@ jQuery(document).ready(function($) {
                                         <option value="Dry clean" ${item.service_type === 'Dry clean' ? 'selected' : ''}>Dry clean</option>
                                         <option value="Stain removal" ${item.service_type === 'Stain removal' ? 'selected' : ''}>Stain removal</option>
                                         <option value="Iron and pressing" ${item.service_type === 'Iron and pressing' ? 'selected' : ''}>Iron and pressing</option>
+                                        <option value="Polish" ${item.service_type === 'Polish' ? 'selected' : ''}>Polish</option>
                                     </select>
                                 </div>
                                 <div class="lol-item-col lol-remove-col">
@@ -415,6 +417,7 @@ jQuery(document).ready(function($) {
                             <option value="Dry clean">Dry clean</option>
                             <option value="Stain removal">Stain removal</option>
                             <option value="Iron and pressing">Iron and pressing</option>
+                            <option value="Polish">Polish</option>
                         </select>
                     </div>
                     <div class="lol-item-col lol-remove-col">

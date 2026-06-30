@@ -419,8 +419,8 @@ function lol_ajax_log_whatsapp() {
         wp_send_json_error( array( 'message' => 'Missing details' ) );
     }
 
-    $sid = get_option('twilio_account_sid', '');
-    $token = get_option('twilio_auth_token', '');
+    $sid = trim(get_option('twilio_account_sid', ''));
+    $token = trim(get_option('twilio_auth_token', ''));
     $twilio_number = trim(get_option('twilio_whatsapp_number', ''));
 
     $api_status = 'Sent via wa.me'; // Default fallback
@@ -433,9 +433,9 @@ function lol_ajax_log_whatsapp() {
         }
         
         // Force WhatsApp prefix
-        if ( strpos($twilio_number, 'whatsapp:') !== 0 ) {
-            $twilio_number = 'whatsapp:' . $twilio_number;
-        }
+        $clean_twilio = preg_replace('/[^0-9]/', '', $twilio_number);
+        $twilio_number = 'whatsapp:+' . $clean_twilio;
+        
         $to_number = 'whatsapp:+' . $cleanPhone;
 
         $url = "https://api.twilio.com/2010-04-01/Accounts/$sid/Messages.json";
@@ -455,14 +455,12 @@ function lol_ajax_log_whatsapp() {
 
         if ( is_wp_error( $response ) ) {
             $api_status = 'Twilio Error: ' . $response->get_error_message();
-            wp_send_json_error( array( 'message' => $api_status ) );
         } else {
             $body = json_decode( wp_remote_retrieve_body( $response ), true );
             if ( isset($body['sid']) ) {
                 $api_status = 'Sent via Twilio API';
             } else {
                 $api_status = 'Twilio Error: ' . (isset($body['message']) ? $body['message'] : 'Unknown');
-                wp_send_json_error( array( 'message' => $api_status ) );
             }
         }
     }
@@ -478,7 +476,11 @@ function lol_ajax_log_whatsapp() {
         array('%d', '%s', '%s', '%s')
     );
 
-    wp_send_json_success( array( 'status' => $api_status ) );
+    if ( strpos($api_status, 'Twilio Error') === 0 ) {
+        wp_send_json_error( array( 'message' => $api_status ) );
+    } else {
+        wp_send_json_success( array( 'status' => $api_status ) );
+    }
 }
 
 // Update Order Status manually

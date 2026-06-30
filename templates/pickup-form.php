@@ -47,6 +47,7 @@
                                 <option value="Dry clean">Dry clean</option>
                                 <option value="Stain removal">Stain removal</option>
                                 <option value="Iron and pressing">Iron and pressing</option>
+                                <option value="Polish">Polish</option>
                             </select>
                         </div>
                         <div class="lol-item-col lol-remove-col">
